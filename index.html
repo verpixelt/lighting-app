@@ -18,6 +18,7 @@
     --brass-dim: #8a721f;
     --rim: #7fa3c2;
     --danger: #b85c4a;
+    --good: #7fae7a;
   }
   *{ box-sizing:border-box; }
   html,body{
@@ -27,231 +28,87 @@
     font-family: 'Space Grotesk', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .app{
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 20px 16px 40px;
-  }
+  .app{ max-width: 920px; margin: 0 auto; padding: 20px 16px 40px; }
   header{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom:16px;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 14px;
-    flex-wrap: wrap;
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    margin-bottom:16px; border-bottom: 1px solid var(--line); padding-bottom: 14px; flex-wrap: wrap;
   }
-  header h1{
-    font-size: 18px;
-    letter-spacing: 0.04em;
-    margin:0;
-    font-weight: 700;
-  }
+  header h1{ font-size: 18px; letter-spacing: 0.04em; margin:0; font-weight: 700; }
   header h1 span{ color: var(--brass); }
-  header p{
-    margin:0;
-    font-size: 12px;
-    color: var(--text-mute);
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .layout{
-    display:grid;
-    grid-template-columns: minmax(0,1fr);
-    gap: 18px;
-  }
-  @media(min-width: 760px){
-    .layout{ grid-template-columns: 1fr 300px; align-items:start; }
-  }
+  header p{ margin:0; font-size: 12px; color: var(--text-mute); font-family: 'JetBrains Mono', monospace; }
+  .layout{ display:grid; grid-template-columns: minmax(0,1fr); gap: 18px; }
+  @media(min-width: 760px){ .layout{ grid-template-columns: 1fr 300px; align-items:start; } }
   .stage-wrap{
-    position:relative;
-    border:1px solid var(--line);
-    border-radius: 4px;
-    background:
-      radial-gradient(ellipse at 50% 30%, #201c26 0%, #14121a 70%, #0e0c12 100%);
-    overflow:hidden;
-    touch-action: none;
+    position:relative; border:1px solid var(--line); border-radius: 4px;
+    background: radial-gradient(ellipse at 50% 30%, #201c26 0%, #14121a 70%, #0e0c12 100%);
+    overflow:hidden; touch-action: none;
   }
   .stage-wrap .grid-lines{
     position:absolute; inset:0;
-    background-image:
-      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events:none;
+    background-image: linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events:none;
   }
-  canvas{
-    display:block;
-    width:100%;
-    height:auto;
-    position:relative;
-  }
-  #camera-video{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    opacity:0.22;
-    filter: grayscale(0.4);
-    pointer-events:none;
-  }
+  canvas{ display:block; width:100%; height:auto; position:relative; }
   .hud{
-    position:absolute;
-    top:10px;
-    left:10px;
-    right:10px;
-    display:flex;
-    justify-content:space-between;
-    font-family:'JetBrains Mono', monospace;
-    font-size: 10.5px;
-    color: var(--brass);
-    letter-spacing:0.04em;
-    pointer-events:none;
-    text-transform:uppercase;
-    opacity:0.85;
+    position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono', monospace; font-size: 10.5px; color: var(--brass); letter-spacing:0.04em;
+    pointer-events:none; text-transform:uppercase; opacity:0.85;
   }
   .hud .dim{ color: var(--text-mute); }
   .hud-bottom{
-    position:absolute;
-    bottom:10px;
-    left:10px;
-    font-family:'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: var(--text-mute);
-    pointer-events:none;
-    letter-spacing:0.03em;
+    position:absolute; bottom:10px; left:10px; font-family:'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--text-mute); pointer-events:none; letter-spacing:0.03em; max-width: 80%;
   }
   .light-handle{
-    position:absolute;
-    width: 26px; height:26px;
-    margin-left:-13px; margin-top:-13px;
-    border-radius:50%;
-    cursor:grab;
-    display:flex;align-items:center;justify-content:center;
-    touch-action:none;
+    position:absolute; width: 26px; height:26px; margin-left:-13px; margin-top:-13px;
+    border-radius:50%; cursor:grab; display:flex;align-items:center;justify-content:center; touch-action:none;
   }
   .light-handle:active{ cursor:grabbing; }
-  .light-handle .core{
-    width:12px;height:12px;border-radius:50%;
-    box-shadow: 0 0 14px 4px currentColor, 0 0 2px 1px currentColor;
-  }
+  .light-handle .core{ width:12px;height:12px;border-radius:50%; box-shadow: 0 0 14px 4px currentColor, 0 0 2px 1px currentColor; }
   .light-handle.key{ color: var(--brass); }
   .light-handle.fill{ color: var(--rim); }
-  .light-handle .ring{
-    position:absolute; inset:0;
-    border:1px solid currentColor;
-    border-radius:50%;
-    opacity:0.5;
-  }
-  .light-label{
-    position:absolute;
-    top:-18px; left:50%; transform:translateX(-50%);
-    font-family:'JetBrains Mono', monospace;
-    font-size:9px;
-    letter-spacing:0.06em;
-    white-space:nowrap;
-    color: inherit;
-    opacity:0.8;
-  }
+  .light-handle .ring{ position:absolute; inset:0; border:1px solid currentColor; border-radius:50%; opacity:0.5; }
+  .light-label{ position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:0.06em; white-space:nowrap; color: inherit; opacity:0.8; }
 
-  .panel{
-    background: var(--panel);
-    border:1px solid var(--line);
-    border-radius:4px;
-    padding: 16px;
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-  }
-  .section-title{
-    font-size:10px;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    color: var(--text-mute);
-    font-family:'JetBrains Mono', monospace;
-    margin: 0 0 8px 0;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
+  .panel{ background: var(--panel); border:1px solid var(--line); border-radius:4px; padding: 16px; display:flex; flex-direction:column; gap:16px; }
+  .section-title{ font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color: var(--text-mute); font-family:'JetBrains Mono', monospace; margin: 0 0 8px 0; display:flex; justify-content:space-between; align-items:center; }
   .control{ margin-bottom:12px; }
   .control:last-child{ margin-bottom:0; }
-  .control label{
-    display:flex;
-    justify-content:space-between;
-    font-size:11.5px;
-    color: var(--text);
-    margin-bottom:5px;
-  }
-  .control label .val{
-    font-family:'JetBrains Mono', monospace;
-    color: var(--text-mute);
-    font-size:10.5px;
-  }
-  input[type=range]{
-    -webkit-appearance:none;
-    width:100%;
-    height:3px;
-    background: var(--line);
-    border-radius:2px;
-    outline:none;
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;
-    width:13px;height:13px;
-    border-radius:50%;
-    background: var(--accent-color, var(--brass));
-    cursor:pointer;
-    border: 2px solid var(--bg);
-  }
-  input[type=range]::-moz-range-thumb{
-    width:13px;height:13px;
-    border-radius:50%;
-    background: var(--accent-color, var(--brass));
-    cursor:pointer;
-    border: 2px solid var(--bg);
-  }
+  .control label{ display:flex; justify-content:space-between; font-size:11.5px; color: var(--text); margin-bottom:5px; }
+  .control label .val{ font-family:'JetBrains Mono', monospace; color: var(--text-mute); font-size:10.5px; }
+  input[type=range]{ -webkit-appearance:none; width:100%; height:3px; background: var(--line); border-radius:2px; outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:13px;height:13px; border-radius:50%; background: var(--accent-color, var(--brass)); cursor:pointer; border: 2px solid var(--bg); }
+  input[type=range]::-moz-range-thumb{ width:13px;height:13px; border-radius:50%; background: var(--accent-color, var(--brass)); cursor:pointer; border: 2px solid var(--bg); }
   .key-block input[type=range]{ --accent-color: var(--brass); }
   .fill-block input[type=range]{ --accent-color: var(--rim); }
+  .photo-block input[type=range]{ --accent-color: var(--good); }
 
-  button{
-    font-family:'Space Grotesk', sans-serif;
-    font-size:11.5px;
-    letter-spacing:0.03em;
-    background: var(--panel-2);
-    color: var(--text);
-    border:1px solid var(--line);
-    border-radius:3px;
-    padding:9px 12px;
-    cursor:pointer;
-    text-align:left;
-  }
+  button{ font-family:'Space Grotesk', sans-serif; font-size:11.5px; letter-spacing:0.03em; background: var(--panel-2); color: var(--text); border:1px solid var(--line); border-radius:3px; padding:9px 12px; cursor:pointer; text-align:left; }
   button:hover{ border-color: var(--brass-dim); }
   button.primary{ color: var(--brass); border-color: var(--brass-dim); }
+  button.on{ color: var(--good); border-color: var(--good); }
   button:disabled{ opacity:0.4; cursor:default; }
   .row2{ display:flex; gap:8px; }
   .row2 button{ flex:1; }
-  .hint{
-    font-size:10.5px;
-    color: var(--text-mute);
-    line-height:1.5;
-    font-family:'JetBrains Mono', monospace;
-  }
+  .hint{ font-size:10.5px; color: var(--text-mute); line-height:1.5; font-family:'JetBrains Mono', monospace; }
   .divider{ height:1px; background:var(--line); margin:2px 0; }
+  #file-input{ display:none; }
+  .status-line{ font-family:'JetBrains Mono', monospace; font-size:10.5px; padding:8px 10px; border-radius:3px; background: var(--panel-2); border:1px solid var(--line); color: var(--text-mute); }
+  .status-line.busy{ color: var(--brass); }
+  .status-line.err{ color: var(--danger); }
+  .status-line.ok{ color: var(--good); }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <h1>LIGHT RIG <span>// prototype</span></h1>
-    <p>lambert shading test bed — primed grey placeholder</p>
+    <p id="mode-label">mode: placeholder shape</p>
   </header>
 
   <div class="layout">
     <div class="stage-wrap" id="stage-wrap">
       <div class="grid-lines"></div>
-      <video id="camera-video" autoplay playsinline muted></video>
       <canvas id="stage-canvas" width="480" height="600"></canvas>
       <div class="hud">
         <span>KEY <span id="hud-key-az" class="dim">142°</span></span>
@@ -272,6 +129,37 @@
     </div>
 
     <div class="panel">
+      <div>
+        <div class="section-title">Source</div>
+        <div class="row2">
+          <button id="btn-load-photo" class="primary">load a photo</button>
+          <button id="btn-mode-toggle" disabled>view: placeholder</button>
+        </div>
+        <input type="file" id="file-input" accept="image/*" capture="environment" />
+        <div class="status-line" id="status-line" style="margin-top:8px;">idle — load a photo to try real depth estimation</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="photo-controls" style="display:none;">
+        <div class="section-title">Photo relief</div>
+        <div class="photo-block">
+          <div class="control">
+            <label>Relief strength <span class="val" id="relief-val">3.0</span></label>
+            <input type="range" id="relief" min="0.5" max="8" step="0.1" value="3" />
+          </div>
+          <div class="control">
+            <label>Shading mix <span class="val" id="mix-val">0.85</span></label>
+            <input type="range" id="mix" min="0" max="1" step="0.05" value="0.85" />
+          </div>
+          <div class="control">
+            <label>Invert relief <span class="val" id="invert-val">off</span></label>
+            <input type="range" id="invert" min="0" max="1" step="1" value="0" />
+          </div>
+        </div>
+      </div>
+      <div class="divider" id="photo-divider" style="display:none;"></div>
+
       <div>
         <div class="section-title">Key light</div>
         <div class="key-block">
@@ -317,12 +205,7 @@
       </div>
 
       <div class="divider"></div>
-
-      <div class="row2">
-        <button id="btn-camera">enable camera ref</button>
-        <button id="btn-reset">reset rig</button>
-      </div>
-      <p class="hint" id="camera-hint">camera feed shows faintly behind the placeholder — not yet used for shading, just a framing reference.</p>
+      <button id="btn-reset">reset rig</button>
     </div>
   </div>
 </div>
@@ -332,39 +215,40 @@
   const canvas = document.getElementById('stage-canvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
-  const stageWrap = document.getElementById('stage-wrap');
 
   const model = {
     head: { cx: 240, cy: 172, r: 64 },
     body: { cx: 240, top: 226, bottom: 418, r: 92 },
     base: { cx: 240, cy: 452, rx: 148, ry: 32 }
   };
-
-  const materialBase = { r: 196, g: 191, b: 184 }; // primed grey plastic
+  const materialBase = { r: 196, g: 191, b: 184 };
 
   const lights = {
     key:  { el: document.getElementById('handle-key'),  x: 150, y: 140, z: 1.1,  strength: 1.0, color:{r:255,g:246,b:228}, on: true },
     fill: { el: document.getElementById('handle-fill'), x: 372, y: 380, z: -0.4, strength: 0.6, color:{r:150,g:196,b:224}, on: false }
   };
-
   let ambient = 0.18;
-  const ambientColor = { r: 46, g: 40, b: 56 }; // cool-dark shadow tone, never pure black
+  const ambientColor = { r: 46, g: 40, b: 56 };
+
+  // ---- photo mode state ----
+  let mode = 'placeholder'; // 'placeholder' | 'photo'
+  let photoNormals = null;  // Float32Array W*H*3
+  let photoPixels = null;   // Uint8ClampedArray W*H*4 (original photo, canvas-fit)
+  let reliefStrength = 3.0;
+  let shadingMix = 0.85;
+  let invertRelief = false;
+  let depthPipelinePromise = null;
 
   function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-  function normalize3(x,y,z){
-    const len = Math.sqrt(x*x+y*y+z*z) || 1;
-    return [x/len, y/len, z/len];
-  }
+  function normalize3(x,y,z){ const len = Math.sqrt(x*x+y*y+z*z) || 1; return [x/len, y/len, z/len]; }
 
-  function getNormal(px, py){
-    // head sphere
+  function getNormalPlaceholder(px, py){
     let dx = px - model.head.cx, dy = py - model.head.cy, r = model.head.r;
     let d2 = dx*dx + dy*dy;
     if (d2 <= r*r){
       const nz = Math.sqrt(Math.max(0, 1 - d2/(r*r)));
       return normalize3(dx/r, dy/r, nz);
     }
-    // body cylinder
     if (py >= model.body.top && py <= model.body.bottom){
       const bx = px - model.body.cx, br = model.body.r;
       if (Math.abs(bx) <= br){
@@ -372,48 +256,70 @@
         return normalize3(bx/br, 0, nz);
       }
     }
-    // base (gentle dome)
     const ex = (px - model.base.cx) / model.base.rx;
     const ey = (py - model.base.cy) / model.base.ry;
-    if (ex*ex + ey*ey <= 1){
-      return normalize3(ex*0.45, ey*0.45 - 0.15, 0.85);
-    }
+    if (ex*ex + ey*ey <= 1) return normalize3(ex*0.45, ey*0.45 - 0.15, 0.85);
     return null;
   }
 
   let imgData = ctx.createImageData(W, H);
 
-  function render(){
-    const data = imgData.data;
-    data.fill(0);
-
+  function lightVectors(){
     const activeLights = Object.values(lights).filter(l => l.on);
-    const lightVecs = activeLights.map(l => {
+    return activeLights.map(l => {
       const [lx, ly, lz] = normalize3(l.x - model.body.cx, -(l.y - model.body.top - (model.body.bottom-model.body.top)/2), l.z);
       return { lx, ly, lz, strength: l.strength, color: l.color };
     });
+  }
 
-    for (let py = 90; py < 500; py++){
-      for (let px = 60; px < 420; px++){
-        const n = getNormal(px, py);
-        if (!n) continue;
-        let r = ambientColor.r * ambient + materialBase.r * ambient * 0.15;
-        let g = ambientColor.g * ambient + materialBase.g * ambient * 0.15;
-        let b = ambientColor.b * ambient + materialBase.b * ambient * 0.15;
+  function render(){
+    const data = imgData.data;
+    const lightVecs = lightVectors();
 
-        for (const lv of lightVecs){
-          const ndotl = Math.max(0, n[0]*lv.lx + n[1]*lv.ly + n[2]*lv.lz);
-          const k = ndotl * lv.strength;
-          r += (materialBase.r/255) * lv.color.r * k;
-          g += (materialBase.g/255) * lv.color.g * k;
-          b += (materialBase.b/255) * lv.color.b * k;
+    if (mode === 'placeholder'){
+      data.fill(0);
+      for (let py = 90; py < 500; py++){
+        for (let px = 60; px < 420; px++){
+          const n = getNormalPlaceholder(px, py);
+          if (!n) continue;
+          let r = ambientColor.r * ambient + materialBase.r * ambient * 0.15;
+          let g = ambientColor.g * ambient + materialBase.g * ambient * 0.15;
+          let b = ambientColor.b * ambient + materialBase.b * ambient * 0.15;
+          for (const lv of lightVecs){
+            const ndotl = Math.max(0, n[0]*lv.lx + n[1]*lv.ly + n[2]*lv.lz);
+            const k = ndotl * lv.strength;
+            r += (materialBase.r/255) * lv.color.r * k;
+            g += (materialBase.g/255) * lv.color.g * k;
+            b += (materialBase.b/255) * lv.color.b * k;
+          }
+          const idx = (py * W + px) * 4;
+          data[idx]=clamp(r,0,255); data[idx+1]=clamp(g,0,255); data[idx+2]=clamp(b,0,255); data[idx+3]=255;
         }
+      }
+    } else if (mode === 'photo' && photoNormals && photoPixels){
+      for (let py = 0; py < H; py++){
+        for (let px = 0; px < W; px++){
+          const i = py*W+px;
+          const ni = i*3, pi = i*4;
+          const nx = photoNormals[ni], ny = photoNormals[ni+1], nz = photoNormals[ni+2];
+          const pr = photoPixels[pi], pg = photoPixels[pi+1], pb = photoPixels[pi+2];
 
-        const idx = (py * W + px) * 4;
-        data[idx]   = clamp(r, 0, 255);
-        data[idx+1] = clamp(g, 0, 255);
-        data[idx+2] = clamp(b, 0, 255);
-        data[idx+3] = 255;
+          let r = ambientColor.r * ambient + pr * ambient * 0.15;
+          let g = ambientColor.g * ambient + pg * ambient * 0.15;
+          let b = ambientColor.b * ambient + pb * ambient * 0.15;
+          for (const lv of lightVecs){
+            const ndotl = Math.max(0, nx*lv.lx + ny*lv.ly + nz*lv.lz);
+            const k = ndotl * lv.strength;
+            r += (pr/255) * lv.color.r * k;
+            g += (pg/255) * lv.color.g * k;
+            b += (pb/255) * lv.color.b * k;
+          }
+          r = clamp(r,0,255); g = clamp(g,0,255); b = clamp(b,0,255);
+          data[pi]   = pr + (r-pr)*shadingMix;
+          data[pi+1] = pg + (g-pg)*shadingMix;
+          data[pi+2] = pb + (b-pb)*shadingMix;
+          data[pi+3] = 255;
+        }
       }
     }
     ctx.putImageData(imgData, 0, 0);
@@ -433,24 +339,15 @@
     let az = Math.atan2(dy, dx) * 180/Math.PI;
     if (az < 0) az += 360;
     document.getElementById('hud-key-az').textContent = Math.round(az) + '°';
+    document.getElementById('hud-mode').textContent = mode === 'photo' ? 'YOUR PHOTO' : 'STUDIO PLACEHOLDER';
   }
 
   // ---- drag handling ----
-  function positionHandle(light){
-    light.el.style.left = light.x + 'px';
-    light.el.style.top = light.y + 'px';
-  }
-
+  function positionHandle(light){ light.el.style.left = light.x + 'px'; light.el.style.top = light.y + 'px'; }
   function setupDrag(light){
     let dragging = false;
-    const getScale = () => {
-      const rect = canvas.getBoundingClientRect();
-      return { sx: W/rect.width, sy: H/rect.height, rect };
-    };
-    light.el.addEventListener('pointerdown', (e) => {
-      dragging = true;
-      light.el.setPointerCapture(e.pointerId);
-    });
+    const getScale = () => { const rect = canvas.getBoundingClientRect(); return { sx: W/rect.width, sy: H/rect.height, rect }; };
+    light.el.addEventListener('pointerdown', (e) => { dragging = true; light.el.setPointerCapture(e.pointerId); });
     light.el.addEventListener('pointermove', (e) => {
       if (!dragging) return;
       const { sx, sy, rect } = getScale();
@@ -459,23 +356,19 @@
       positionHandle(light);
       scheduleRender();
     });
-    light.el.addEventListener('pointerup', (e) => {
-      dragging = false;
-      light.el.releasePointerCapture(e.pointerId);
-    });
+    light.el.addEventListener('pointerup', (e) => { dragging = false; light.el.releasePointerCapture(e.pointerId); });
   }
-  setupDrag(lights.key);
-  setupDrag(lights.fill);
-  positionHandle(lights.key);
-  positionHandle(lights.fill);
+  setupDrag(lights.key); setupDrag(lights.fill);
+  positionHandle(lights.key); positionHandle(lights.fill);
 
   // ---- sliders ----
-  function bindSlider(id, valId, onChange){
+  function bindSlider(id, valId, onChange, fmt){
     const el = document.getElementById(id);
     const valEl = document.getElementById(valId);
     el.addEventListener('input', () => {
-      valEl.textContent = parseFloat(el.value).toFixed(2);
-      onChange(parseFloat(el.value));
+      const v = parseFloat(el.value);
+      valEl.textContent = fmt ? fmt(v) : v.toFixed(2);
+      onChange(v);
       scheduleRender();
     });
   }
@@ -484,21 +377,19 @@
   bindSlider('fill-depth', 'fill-depth-val', v => lights.fill.z = v);
   bindSlider('fill-strength', 'fill-strength-val', v => lights.fill.strength = v);
   bindSlider('ambient', 'ambient-val', v => ambient = v);
+  bindSlider('relief', 'relief-val', v => { reliefStrength = v; recomputeNormalsFromDepth(); }, v => v.toFixed(1));
+  bindSlider('mix', 'mix-val', v => shadingMix = v);
+  bindSlider('invert', 'invert-val', v => { invertRelief = !!v; recomputeNormalsFromDepth(); }, v => v ? 'on' : 'off');
 
-  // ---- fill light toggle ----
-  const btnFillToggle = document.getElementById('btn-fill-toggle');
-  const fillControls = document.getElementById('fill-controls');
-  const fillState = document.getElementById('fill-toggle-state');
-  btnFillToggle.addEventListener('click', () => {
+  document.getElementById('btn-fill-toggle').addEventListener('click', () => {
     lights.fill.on = !lights.fill.on;
     lights.fill.el.style.display = lights.fill.on ? 'flex' : 'none';
-    fillControls.style.display = lights.fill.on ? 'block' : 'none';
-    fillState.textContent = lights.fill.on ? 'on' : 'off';
-    btnFillToggle.textContent = lights.fill.on ? '− remove fill / rim light' : '+ add fill / rim light';
+    document.getElementById('fill-controls').style.display = lights.fill.on ? 'block' : 'none';
+    document.getElementById('fill-toggle-state').textContent = lights.fill.on ? 'on' : 'off';
+    document.getElementById('btn-fill-toggle').textContent = lights.fill.on ? '− remove fill / rim light' : '+ add fill / rim light';
     scheduleRender();
   });
 
-  // ---- reset ----
   document.getElementById('btn-reset').addEventListener('click', () => {
     lights.key.x = 150; lights.key.y = 140; lights.key.z = 1.1; lights.key.strength = 1.0;
     document.getElementById('key-depth').value = 1.1;
@@ -512,29 +403,128 @@
     scheduleRender();
   });
 
-  // ---- camera reference (best-effort; not used for shading) ----
-  const btnCamera = document.getElementById('btn-camera');
-  const video = document.getElementById('camera-video');
-  const cameraHint = document.getElementById('camera-hint');
-  let camOn = false;
-  btnCamera.addEventListener('click', async () => {
-    if (camOn){
-      const stream = video.srcObject;
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      video.srcObject = null;
-      camOn = false;
-      btnCamera.textContent = 'enable camera ref';
-      return;
+  // ---- mode toggle ----
+  const btnModeToggle = document.getElementById('btn-mode-toggle');
+  btnModeToggle.addEventListener('click', () => {
+    mode = mode === 'placeholder' ? 'photo' : 'placeholder';
+    btnModeToggle.textContent = 'view: ' + (mode === 'photo' ? 'your photo' : 'placeholder');
+    document.getElementById('mode-label').textContent = 'mode: ' + (mode === 'photo' ? 'depth-estimated photo' : 'placeholder shape');
+    document.getElementById('photo-controls').style.display = mode === 'photo' ? 'block' : 'none';
+    document.getElementById('photo-divider').style.display = mode === 'photo' ? 'block' : 'none';
+    scheduleRender();
+  });
+
+  // ---- depth pipeline ----
+  const statusLine = document.getElementById('status-line');
+  function setStatus(text, cls){
+    statusLine.textContent = text;
+    statusLine.className = 'status-line' + (cls ? ' ' + cls : '');
+  }
+
+  async function getDepthPipeline(){
+    if (depthPipelinePromise) return depthPipelinePromise;
+    depthPipelinePromise = (async () => {
+      setStatus('loading transformers.js...', 'busy');
+      const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0');
+      setStatus('downloading depth model (first run only, ~30MB)...', 'busy');
+      const pipe = await pipeline('depth-estimation', 'onnx-community/depth-anything-v2-small', {
+        progress_callback: (p) => {
+          if (p && p.status === 'progress' && p.file){
+            const pct = p.total ? Math.round((p.loaded/p.total)*100) : null;
+            setStatus('downloading ' + p.file + (pct!==null ? ' — ' + pct + '%' : ''), 'busy');
+          }
+        }
+      });
+      return pipe;
+    })();
+    return depthPipelinePromise;
+  }
+
+  let lastDepthValues = null; // Float32Array W*H grayscale, for relief slider re-use
+
+  function computeNormalsFromDepth(depthValues){
+    const arr = new Float32Array(W*H*3);
+    const s = (invertRelief ? -1 : 1) * reliefStrength / 40;
+    const at = (x,y) => depthValues[clamp(y,0,H-1)*W + clamp(x,0,W-1)];
+    for (let y=0; y<H; y++){
+      for (let x=0; x<W; x++){
+        const gx = (at(x+1,y) - at(x-1,y)) * s;
+        const gy = (at(x,y+1) - at(x,y-1)) * s;
+        const [nx,ny,nz] = normalize3(-gx, -gy, 1);
+        const i = (y*W+x)*3;
+        arr[i]=nx; arr[i+1]=ny; arr[i+2]=nz;
+      }
     }
+    return arr;
+  }
+
+  function recomputeNormalsFromDepth(){
+    if (!lastDepthValues) return;
+    photoNormals = computeNormalsFromDepth(lastDepthValues);
+    scheduleRender();
+  }
+
+  async function processFile(file){
     try{
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      video.srcObject = stream;
-      camOn = true;
-      btnCamera.textContent = 'disable camera ref';
-      cameraHint.textContent = 'camera feed is live behind the placeholder, faded — framing reference only.';
+      setStatus('reading image...', 'busy');
+      const bitmap = await createImageBitmap(file);
+
+      // draw into working canvas at W x H, cover-fit
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const octx = off.getContext('2d');
+      const scale = Math.max(W/bitmap.width, H/bitmap.height);
+      const dw = bitmap.width*scale, dh = bitmap.height*scale;
+      octx.drawImage(bitmap, (W-dw)/2, (H-dh)/2, dw, dh);
+      photoPixels = octx.getImageData(0,0,W,H).data;
+
+      const pipe = await getDepthPipeline();
+      setStatus('estimating depth...', 'busy');
+      const output = await pipe(off.toDataURL('image/png'));
+
+      // output.depth is a RawImage; render to canvas to read grayscale values
+      const depthCanvas = output.depth.toCanvas ? output.depth.toCanvas() : null;
+      let depthValues;
+      if (depthCanvas){
+        const dctx = depthCanvas.getContext('2d');
+        // resize depth canvas to W x H if needed
+        let src = depthCanvas;
+        if (depthCanvas.width !== W || depthCanvas.height !== H){
+          const rs = document.createElement('canvas');
+          rs.width = W; rs.height = H;
+          rs.getContext('2d').drawImage(depthCanvas, 0, 0, W, H);
+          src = rs;
+        }
+        const d = src.getContext('2d').getImageData(0,0,W,H).data;
+        depthValues = new Float32Array(W*H);
+        for (let i=0;i<W*H;i++) depthValues[i] = d[i*4]; // grayscale, use R channel
+      } else {
+        throw new Error('unexpected depth output format');
+      }
+
+      lastDepthValues = depthValues;
+      photoNormals = computeNormalsFromDepth(depthValues);
+
+      mode = 'photo';
+      btnModeToggle.disabled = false;
+      btnModeToggle.textContent = 'view: your photo';
+      document.getElementById('mode-label').textContent = 'mode: depth-estimated photo';
+      document.getElementById('photo-controls').style.display = 'block';
+      document.getElementById('photo-divider').style.display = 'block';
+      setStatus('done — drag the lamps to preview lighting on your photo', 'ok');
+      scheduleRender();
     }catch(err){
-      cameraHint.textContent = 'camera not available in this preview window (needs a real device + permission) — this works once the app runs standalone on your phone.';
+      console.error(err);
+      setStatus('failed: ' + (err && err.message ? err.message : 'could not load model (likely blocked by this preview sandbox — try opening the file directly in a browser tab)'), 'err');
     }
+  }
+
+  document.getElementById('btn-load-photo').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+  });
+  document.getElementById('file-input').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) processFile(file);
   });
 
   render();
