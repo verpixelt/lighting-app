@@ -132,18 +132,62 @@
       <div>
         <div class="section-title">Source</div>
         <div class="row2">
-          <button id="btn-load-photo" class="primary">load a photo</button>
+          <button id="btn-load-photo" class="primary">single photo (ML depth)</button>
+          <button id="btn-start-photometric" class="primary">4-shot (photometric)</button>
+        </div>
+        <div class="row2" style="margin-top:8px;">
           <button id="btn-mode-toggle" disabled>view: placeholder</button>
         </div>
         <input type="file" id="file-input" accept="image/*" capture="environment" />
-        <div class="status-line" id="status-line" style="margin-top:8px;">idle — load a photo to try real depth estimation</div>
+        <input type="file" id="file-input-ps" accept="image/*" capture="environment" />
+        <div class="status-line" id="status-line" style="margin-top:8px;">idle — pick a capture method above</div>
       </div>
+
+      <div class="divider"></div>
+
+      <div id="ps-flow" style="display:none;">
+        <div class="section-title">Photometric capture</div>
+        <div class="hint" id="ps-instruction" style="margin-bottom:8px;">Rest the phone on something still. Hold a flashlight/torch at each position below, one at a time, and tap capture. Don't move the phone between shots.</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; width:88px; margin:0 auto 10px;">
+          <div class="ps-dot" data-i="0" style="aspect-ratio:1; border-radius:50%; border:1px solid var(--line); display:flex;align-items:center;justify-content:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-mute);">1</div>
+          <div class="ps-dot" data-i="1" style="aspect-ratio:1; border-radius:50%; border:1px solid var(--line); display:flex;align-items:center;justify-content:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-mute);">2</div>
+          <div class="ps-dot" data-i="2" style="aspect-ratio:1; border-radius:50%; border:1px solid var(--line); display:flex;align-items:center;justify-content:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-mute);">3</div>
+          <div class="ps-dot" data-i="3" style="aspect-ratio:1; border-radius:50%; border:1px solid var(--line); display:flex;align-items:center;justify-content:center; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-mute);">4</div>
+        </div>
+        <button id="btn-ps-capture" class="primary" style="width:100%;">capture shot 1 — light upper-left</button>
+        <p class="hint" id="ps-cancel-hint" style="margin-top:8px;"><button id="btn-ps-cancel" style="width:100%;">cancel / start over</button></p>
+      </div>
+
+      <div id="ps-align" style="display:none;">
+        <div class="section-title">Align shots</div>
+        <div class="hint" id="ps-align-hint" style="margin-bottom:8px;">Shot 1 is the reference (full opacity). The selected shot overlays at 50% — nudge it until edges stop doubling.</div>
+        <div class="row2" style="margin-bottom:8px;">
+          <button id="ps-align-2">shot 2</button>
+          <button id="ps-align-3">shot 3</button>
+          <button id="ps-align-4">shot 4</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:6px; max-width:150px; margin: 0 auto 10px;">
+          <div></div><button id="ps-nudge-up">▲</button><div></div>
+          <button id="ps-nudge-left">◀</button><button id="ps-nudge-step">±2</button><button id="ps-nudge-right">▶</button>
+          <div></div><button id="ps-nudge-down">▼</button><div></div>
+        </div>
+        <div class="control">
+          <label>Brightness match <span class="val" id="ps-gain-val">1.00</span></label>
+          <input type="range" id="ps-gain" min="0.3" max="3" step="0.05" value="1" />
+        </div>
+        <button id="btn-ps-compute" class="primary" style="width:100%; margin-top:6px;">compute surface normals</button>
+      </div>
+      <div class="divider" id="ps-divider" style="display:none;"></div>
 
       <div class="divider"></div>
 
       <div id="photo-controls" style="display:none;">
         <div class="section-title">Photo relief</div>
         <div class="photo-block">
+          <div class="control">
+            <label>Smoothing (broad form) <span class="val" id="smooth-val">5</span></label>
+            <input type="range" id="smooth" min="0" max="20" step="1" value="5" />
+          </div>
           <div class="control">
             <label>Relief strength <span class="val" id="relief-val">3.0</span></label>
             <input type="range" id="relief" min="0.5" max="8" step="0.1" value="3" />
@@ -238,6 +282,148 @@
   let shadingMix = 0.85;
   let invertRelief = false;
   let depthPipelinePromise = null;
+  let rawDepthValues = null;
+  let smoothingRadius = 5;
+
+  // ---- photometric stereo state ----
+  const PS_LIGHT_DIRS = [
+    normalize3(-0.55,  0.55, 0.62), // 1: upper-left
+    normalize3( 0.55,  0.55, 0.62), // 2: upper-right
+    normalize3(-0.55, -0.55, 0.62), // 3: lower-left
+    normalize3( 0.55, -0.55, 0.62)  // 4: lower-right
+  ];
+  const PS_LABELS = ['upper-left','upper-right','lower-left','lower-right'];
+  let psShots = []; // {bitmap, dx, dy, gain}
+  let psCaptureIndex = 0;
+  let psAlignSelected = 1; // index 1..3 into psShots
+  let psNudgeStep = 2;
+
+  function mat3Inverse(m){
+    const [a,b,c,d,e,f,g,h,i] = m;
+    const A = e*i-f*h, B = -(d*i-f*g), C = d*h-e*g;
+    const det = a*A + b*B + c*C;
+    if (Math.abs(det) < 1e-9) return null;
+    const invDet = 1/det;
+    return [
+      A*invDet, (c*h-b*i)*invDet, (b*f-c*e)*invDet,
+      B*invDet, (a*i-c*g)*invDet, (c*d-a*f)*invDet,
+      C*invDet, (b*g-a*h)*invDet, (a*e-b*d)*invDet
+    ];
+  }
+  // precompute pseudo-inverse of the 4x3 light matrix -> 3x4
+  function computePseudoInverse(lightDirs){
+    // A = L^T L (3x3)
+    const A = [0,0,0, 0,0,0, 0,0,0];
+    for (const L of lightDirs){
+      A[0]+=L[0]*L[0]; A[1]+=L[0]*L[1]; A[2]+=L[0]*L[2];
+      A[3]+=L[1]*L[0]; A[4]+=L[1]*L[1]; A[5]+=L[1]*L[2];
+      A[6]+=L[2]*L[0]; A[7]+=L[2]*L[1]; A[8]+=L[2]*L[2];
+    }
+    const Ainv = mat3Inverse(A);
+    if (!Ainv) return null;
+    // pseudoInv (3x4) = Ainv (3x3) * L^T (3xN)
+    const pinv = lightDirs.map(() => [0,0,0]);
+    for (let li=0; li<lightDirs.length; li++){
+      const L = lightDirs[li];
+      for (let row=0; row<3; row++){
+        pinv[li][row] = Ainv[row*3+0]*L[0] + Ainv[row*3+1]*L[1] + Ainv[row*3+2]*L[2];
+      }
+    }
+    return pinv; // pinv[shotIndex][0..2] such that g = sum_i pinv[i]*I_i
+  }
+  const psPseudoInv = computePseudoInverse(PS_LIGHT_DIRS);
+
+  function drawShotToCtx(targetCtx, shot, alpha){
+    const scale = Math.max(W/shot.bitmap.width, H/shot.bitmap.height);
+    const dw = shot.bitmap.width*scale, dh = shot.bitmap.height*scale;
+    targetCtx.globalAlpha = alpha;
+    targetCtx.drawImage(shot.bitmap, (W-dw)/2+shot.dx, (H-dh)/2+shot.dy, dw, dh);
+    targetCtx.globalAlpha = 1;
+  }
+
+  function drawAlignmentPreview(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0e0c12';
+    ctx.fillRect(0,0,W,H);
+    drawShotToCtx(ctx, psShots[0], 1.0);
+    const sel = psShots[psAlignSelected];
+    if (sel) drawShotToCtx(ctx, sel, 0.5);
+  }
+
+  function getShotPixels(shot){
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const octx = off.getContext('2d');
+    octx.fillStyle = '#000'; octx.fillRect(0,0,W,H);
+    drawShotToCtx(octx, shot, 1.0);
+    return octx.getImageData(0,0,W,H).data;
+  }
+
+  function computePhotometricNormals(){
+    if (!psPseudoInv || psShots.length < 4) return;
+    setStatus('solving surface normals...', 'busy');
+    const pixelSets = psShots.map(s => getShotPixels(s));
+    const gains = psShots.map(s => s.gain || 1);
+    const outNormals = new Float32Array(W*H*3);
+    const outPixels = new Uint8ClampedArray(W*H*4);
+    for (let p=0; p<W*H; p++){
+      const pi = p*4;
+      let gx=0, gy=0, gz=0;
+      let ar=0, ag=0, ab=0;
+      for (let s=0; s<4; s++){
+        const d = pixelSets[s];
+        const r=d[pi], g=d[pi+1], b=d[pi+2];
+        const lum = (0.299*r+0.587*g+0.114*b) * gains[s];
+        const w = psPseudoInv[s];
+        gx += w[0]*lum; gy += w[1]*lum; gz += w[2]*lum;
+        ar+=r; ag+=g; ab+=b;
+      }
+      const rho = Math.sqrt(gx*gx+gy*gy+gz*gz);
+      let nx=0, ny=0, nz=1;
+      if (rho > 1e-3){ nx = gx/rho; ny = gy/rho; nz = gz/rho; if (nz < 0){ nx=-nx; ny=-ny; nz=-nz; } }
+      const ni = p*3;
+      outNormals[ni]=nx; outNormals[ni+1]=ny; outNormals[ni+2]=nz;
+      outPixels[pi]=ar/4; outPixels[pi+1]=ag/4; outPixels[pi+2]=ab/4; outPixels[pi+3]=255;
+    }
+    photoNormals = outNormals;
+    photoPixels = outPixels;
+    mode = 'photo';
+    document.getElementById('ps-align').style.display = 'none';
+    document.getElementById('ps-divider').style.display = 'none';
+    btnModeToggle.disabled = false;
+    btnModeToggle.textContent = 'view: your photo';
+    document.getElementById('mode-label').textContent = 'mode: photometric-stereo photo';
+    document.getElementById('photo-controls').style.display = 'none'; // relief sliders don't apply to true normals
+    document.getElementById('photo-divider').style.display = 'none';
+    setStatus('done — true surface normals recovered from 4 shots', 'ok');
+    scheduleRender();
+  }
+
+  function boxBlurPass(src, radius, w, h){
+    if (radius <= 0) return src.slice();
+    const tmp = new Float32Array(w*h);
+    const out = new Float32Array(w*h);
+    for (let y=0; y<h; y++){
+      let sum=0, count=0;
+      for (let x=-radius; x<=radius; x++){ sum += src[y*w+clamp(x,0,w-1)]; count++; }
+      for (let x=0; x<w; x++){
+        tmp[y*w+x] = sum/count;
+        sum += src[y*w+clamp(x+radius+1,0,w-1)] - src[y*w+clamp(x-radius,0,w-1)];
+      }
+    }
+    for (let x=0; x<w; x++){
+      let sum=0, count=0;
+      for (let y=-radius; y<=radius; y++){ sum += tmp[clamp(y,0,h-1)*w+x]; count++; }
+      for (let y=0; y<h; y++){
+        out[y*w+x] = sum/count;
+        sum += tmp[clamp(y+radius+1,0,h-1)*w+x] - tmp[clamp(y-radius,0,h-1)*w+x];
+      }
+    }
+    return out;
+  }
+  function smoothDepth(values, radius){
+    return boxBlurPass(boxBlurPass(values, radius, W, H), radius, W, H);
+  }
 
   function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
   function normalize3(x,y,z){ const len = Math.sqrt(x*x+y*y+z*z) || 1; return [x/len, y/len, z/len]; }
@@ -380,6 +566,7 @@
   bindSlider('relief', 'relief-val', v => { reliefStrength = v; recomputeNormalsFromDepth(); }, v => v.toFixed(1));
   bindSlider('mix', 'mix-val', v => shadingMix = v);
   bindSlider('invert', 'invert-val', v => { invertRelief = !!v; recomputeNormalsFromDepth(); }, v => v ? 'on' : 'off');
+  bindSlider('smooth', 'smooth-val', v => { smoothingRadius = Math.round(v); applySmoothing(); }, v => Math.round(v).toString());
 
   document.getElementById('btn-fill-toggle').addEventListener('click', () => {
     lights.fill.on = !lights.fill.on;
@@ -464,6 +651,12 @@
     scheduleRender();
   }
 
+  function applySmoothing(){
+    if (!rawDepthValues) return;
+    lastDepthValues = smoothDepth(rawDepthValues, smoothingRadius);
+    recomputeNormalsFromDepth();
+  }
+
   async function processFile(file){
     try{
       setStatus('reading image...', 'busy');
@@ -502,8 +695,9 @@
         throw new Error('unexpected depth output format');
       }
 
-      lastDepthValues = depthValues;
-      photoNormals = computeNormalsFromDepth(depthValues);
+      rawDepthValues = depthValues;
+      lastDepthValues = smoothDepth(rawDepthValues, smoothingRadius);
+      photoNormals = computeNormalsFromDepth(lastDepthValues);
 
       mode = 'photo';
       btnModeToggle.disabled = false;
@@ -526,6 +720,81 @@
     const file = e.target.files && e.target.files[0];
     if (file) processFile(file);
   });
+
+  // ---- photometric stereo capture flow ----
+  const psFlow = document.getElementById('ps-flow');
+  const psAlign = document.getElementById('ps-align');
+  const psCaptureBtn = document.getElementById('btn-ps-capture');
+  const psDots = document.querySelectorAll('.ps-dot');
+  const filePs = document.getElementById('file-input-ps');
+
+  function psResetUI(){
+    psShots = []; psCaptureIndex = 0;
+    psDots.forEach(d => { d.style.borderColor = 'var(--line)'; d.style.color = 'var(--text-mute)'; });
+    psCaptureBtn.textContent = 'capture shot 1 — light ' + PS_LABELS[0];
+    psFlow.style.display = 'block';
+    psAlign.style.display = 'none';
+    document.getElementById('ps-divider').style.display = 'block';
+    setStatus('ready — capture 4 shots, one light position each', '');
+  }
+
+  document.getElementById('btn-start-photometric').addEventListener('click', psResetUI);
+  document.getElementById('btn-ps-cancel').addEventListener('click', () => {
+    psFlow.style.display = 'none';
+    psAlign.style.display = 'none';
+    document.getElementById('ps-divider').style.display = 'none';
+    setStatus('cancelled', '');
+  });
+
+  psCaptureBtn.addEventListener('click', () => filePs.click());
+  filePs.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const bitmap = await createImageBitmap(file);
+    psShots.push({ bitmap, dx: 0, dy: 0, gain: 1 });
+    const dot = psDots[psCaptureIndex];
+    dot.style.borderColor = 'var(--good)'; dot.style.color = 'var(--good)';
+    psCaptureIndex++;
+    filePs.value = '';
+    if (psCaptureIndex < 4){
+      psCaptureBtn.textContent = 'capture shot ' + (psCaptureIndex+1) + ' — light ' + PS_LABELS[psCaptureIndex];
+    } else {
+      psFlow.style.display = 'none';
+      psAlign.style.display = 'block';
+      psAlignSelected = 1;
+      setStatus('align shot 2, 3, 4 against shot 1, then compute', '');
+      drawAlignmentPreview();
+    }
+  });
+
+  [2,3,4].forEach((n,idx) => {
+    document.getElementById('ps-align-' + n).addEventListener('click', () => {
+      psAlignSelected = idx+1;
+      document.getElementById('ps-gain').value = psShots[psAlignSelected].gain;
+      document.getElementById('ps-gain-val').textContent = psShots[psAlignSelected].gain.toFixed(2);
+      drawAlignmentPreview();
+    });
+  });
+  function nudge(dx,dy){
+    const s = psShots[psAlignSelected];
+    if (!s) return;
+    s.dx += dx; s.dy += dy;
+    drawAlignmentPreview();
+  }
+  document.getElementById('ps-nudge-up').addEventListener('click', () => nudge(0,-psNudgeStep));
+  document.getElementById('ps-nudge-down').addEventListener('click', () => nudge(0,psNudgeStep));
+  document.getElementById('ps-nudge-left').addEventListener('click', () => nudge(-psNudgeStep,0));
+  document.getElementById('ps-nudge-right').addEventListener('click', () => nudge(psNudgeStep,0));
+  document.getElementById('ps-nudge-step').addEventListener('click', (e) => {
+    psNudgeStep = psNudgeStep === 2 ? 8 : 2;
+    e.target.textContent = '±' + psNudgeStep;
+  });
+  document.getElementById('ps-gain').addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    document.getElementById('ps-gain-val').textContent = v.toFixed(2);
+    if (psShots[psAlignSelected]) psShots[psAlignSelected].gain = v;
+  });
+  document.getElementById('btn-ps-compute').addEventListener('click', computePhotometricNormals);
 
   render();
 })();
